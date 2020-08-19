@@ -12,7 +12,6 @@ RoutePlanner::RoutePlanner(RouteModel &model, float start_x, float start_y, floa
     // Store the nodes you find in the RoutePlanner's start_node and end_node attributes.
     start_node = &m_Model.FindClosestNode(start_x, start_y);
     end_node = &m_Model.FindClosestNode(end_x, end_y);
-    open_list = { };
 }
 
 
@@ -36,7 +35,7 @@ float RoutePlanner::CalculateHValue(RouteModel::Node const *node) {
 
 void RoutePlanner::AddNeighbors(RouteModel::Node *current_node) {
   current_node->FindNeighbors();
-  for (RouteModel::Node* neighbor : current_node->neighbors) {
+  for (auto neighbor : current_node->neighbors) {
     if (!neighbor->visited) {
       neighbor->parent = current_node;
       neighbor->h_value = CalculateHValue(neighbor);
@@ -47,10 +46,6 @@ void RoutePlanner::AddNeighbors(RouteModel::Node *current_node) {
   }
 }
 
-bool isNodeGreaterThan (RouteModel::Node* a, RouteModel::Node* b) {
-  return ((a->h_value + a->g_value) > (b->h_value + b->g_value));
-}
-
 // TODO 5: Complete the NextNode method to sort the open list and return the next node.
 // Tips:
 // - Sort the open_list according to the sum of the h value and g value.
@@ -59,7 +54,7 @@ bool isNodeGreaterThan (RouteModel::Node* a, RouteModel::Node* b) {
 // - Return the pointer.
 
 RouteModel::Node *RoutePlanner::NextNode() {
-  std::sort (open_list.begin(), open_list.end(), isNodeGreaterThan);
+  std::sort (open_list.begin(), open_list.end(), [](const RouteModel::Node *a, const RouteModel::Node *b) { return (a->h_value + a->g_value) > (b->h_value + b->g_value); });
   RouteModel::Node* nextNode = open_list.back();
   open_list.pop_back();
 
@@ -106,9 +101,9 @@ void RoutePlanner::AStarSearch() {
     while (open_list.size() > 0) {
       current_node = NextNode();
 
-      if (current_node->x == end_node->x && current_node->y == end_node->y) {
+      if (current_node == end_node) {
         m_Model.path = ConstructFinalPath(current_node);       
-        return;
+        break;
       }
       else
         AddNeighbors(current_node);
